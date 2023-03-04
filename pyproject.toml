@@ -7,7 +7,7 @@ enabled = true
 
 [project]
 dynamic=["version"]
-name="async-task"
+name="simple-async-task"
 description="A simple library for managing asynchrony."
 readme="README.md"
 authors=[{name="Matt Fowler", email="mattefowler@gmail.com"}]
