@@ -1,8 +1,13 @@
 [build-system]
-requires=["setuptools", "wheel"]
+requires=["setuptools", "wheel", "setuptools-git-versioning<2"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools-git-versioning]
+enabled = true
 
 [project]
-name="async-tasks"
+dynamic=["version"]
+name="async-task"
 description="A simple library for managing asynchrony."
 readme="README.md"
 authors=[{name="Matt Fowler", email="mattefowler@gmail.com"}]
@@ -11,13 +16,9 @@ classifiers=[
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
-    "Topic :: Software Development :: Libraries :: Python Modules",
-    "License :: Apache-2.0"
+    "Topic :: Software Development :: Libraries :: Python Modules"
 ]
-license="Apache-2.0"
+license={file="LICENSE"}
 requires-python=">=3.10"
-packages=[
-    {include="async_task"},
-]
 [tool.black]
 line-length=79
