@@ -16,6 +16,7 @@ e.g.:
 
 ```python
 from async_task import Async
+
 @Async
 def func():
     return 0
