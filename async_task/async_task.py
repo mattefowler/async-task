@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import sys
+import time
 from collections.abc import Callable
 from functools import wraps
 from threading import Thread
@@ -29,9 +30,7 @@ class Async(Generic[T]):
 
     def __get__(self, instance, owner) -> Async[T]:
         """Supports use of Async as a method decorator."""
-        return Async[T](
-            self._function.__get__(instance, owner), f"{instance}.{self._thread_name}"
-        )
+        return Async[T](self._function.__get__(instance, owner), f"{instance}.{self._thread_name}")
 
     class Worker(Generic[T]):
         def __init__(self, function: Callable[..., T], thread_name, *args, **kwargs):
@@ -47,9 +46,7 @@ class Async(Generic[T]):
             self._result: T | None = None
             self._exc_info: EXC_INFO | None = None
             self._function = function
-            self._thread = Thread(
-                target=self._execute, name=thread_name, args=args, kwargs=kwargs
-            )
+            self._thread = Thread(target=self._execute, name=thread_name, args=args, kwargs=kwargs)
             self._thread.start()
 
         def _execute(self, *args, **kwargs):
@@ -82,3 +79,23 @@ class Async(Generic[T]):
 
         def __str__(self):
             return f"Async Worker {self._thread.name}"
+
+    @classmethod
+    def wait(cls, *workers: Async.Worker, timeout: SECONDS = None):
+        """
+        Await all workers, capturing any exceptions that occur.
+        Args:
+            *workers: the workers to join.
+            timeout: the maximum amount of time to wait for all workers to join.
+        """
+        exceptions = []
+        t0 = time.perf_counter()
+
+        for w in workers:
+            try:
+                wait_time = None if timeout is None else max(0, timeout - (time.perf_counter() - t0))
+                w.wait(timeout=wait_time)
+            except Exception as e:
+                exceptions.append(e)
+        if exceptions:
+            raise ExceptionGroup("Exceptions occurred in worker execution", exceptions)
