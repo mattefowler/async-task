@@ -1,5 +1,6 @@
 import time
 import traceback
+from collections import Counter
 from unittest import TestCase
 
 from async_task.async_task import Async
@@ -64,3 +65,23 @@ class TestAsync(TestCase):
         worker = _async()
         self.assertEqual(name, worker._thread.name)
         self.assertEqual(f"Async Worker {name}", str(worker))
+
+    def test_wait_many(self):
+        @Async
+        def test(sleep_time=0):
+            time.sleep(sleep_time)
+
+        with self.assertRaises(ExceptionGroup) as eg:
+            Async.wait(test(.1), timeout=0)
+        ex, = eg.exception.exceptions
+        self.assertIsInstance(ex, TimeoutError)
+
+        with self.subTest("Test combined timeout"):
+            @Async
+            def _raise():
+                raise ValueError("expected")
+
+            with self.assertRaises(ExceptionGroup) as eg:
+                Async.wait(test(0), test(.1), test(.1), _raise(), timeout=.05)
+                ex_counts = Counter(map(type, eg.exception.exceptions))
+                self.assertEqual({TimeoutError: 2, ValueError: 1}, ex_counts)
