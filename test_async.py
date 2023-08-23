@@ -1,6 +1,7 @@
 import time
 import traceback
 from collections import Counter
+from threading import Thread
 from unittest import TestCase
 
 from async_task.async_task import Async
@@ -85,3 +86,13 @@ class TestAsync(TestCase):
                 Async.wait(test(0), test(.1), test(.1), _raise(), timeout=.05)
                 ex_counts = Counter(map(type, eg.exception.exceptions))
                 self.assertEqual({TimeoutError: 2, ValueError: 1}, ex_counts)
+
+    def test_daemon(self):
+
+        @Async.daemon
+        def f():
+            pass
+
+        worker: Async.Worker = f()
+        thread: Thread = worker._thread
+        self.assertTrue(thread.daemon)
