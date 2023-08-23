@@ -6,14 +6,14 @@ from collections.abc import Callable
 from functools import wraps
 from threading import Thread
 from types import TracebackType
-from typing import Any, Generic, T
+from typing import Generic, T
 
 SECONDS = float
 EXC_INFO = tuple[Exception, type[Exception], TracebackType]
 
 
 class Async(Generic[T]):
-    def __init__(self, function: Callable[..., T], thread_name=None):
+    def __init__(self, function: Callable[..., T], thread_name=None, daemon=False):
         """
         Create an asynchronous execution wrapper around a callable.
         Args:
@@ -22,18 +22,23 @@ class Async(Generic[T]):
         """
         wraps(function)(self)
         self._function = function
+        self._daemon = daemon
         self._thread_name = thread_name or getattr(function, "__name__", str(function))
 
     def __call__(self, *args, **kwargs) -> Worker[T]:
         """Run the function in a background thread with the arguments provided."""
-        return self.Worker[T](self._function, self._thread_name, *args, **kwargs)
+        return self.Worker[T](self._function, self._thread_name, self._daemon, *args, **kwargs)
 
     def __get__(self, instance, owner) -> Async[T]:
         """Supports use of Async as a method decorator."""
         return Async[T](self._function.__get__(instance, owner), f"{instance}.{self._thread_name}")
 
+    @classmethod
+    def daemon(cls, f, thread_name=None):
+        return cls(f, thread_name=thread_name, daemon=True)
+
     class Worker(Generic[T]):
-        def __init__(self, function: Callable[..., T], thread_name, *args, **kwargs):
+        def __init__(self, function: Callable[..., T], thread_name, daemon: bool, *args, **kwargs):
             """
             A background worker that manages relaying output and exceptions back to the calling thread. This is usually
             created by calling an Async object and not instantiated directly.
@@ -46,7 +51,9 @@ class Async(Generic[T]):
             self._result: T | None = None
             self._exc_info: EXC_INFO | None = None
             self._function = function
-            self._thread = Thread(target=self._execute, name=thread_name, args=args, kwargs=kwargs)
+            self._thread = Thread(
+                target=self._execute, name=thread_name, daemon=daemon, args=args, kwargs=kwargs
+            )
             self._thread.start()
 
         def _execute(self, *args, **kwargs):
