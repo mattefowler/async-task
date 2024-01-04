@@ -85,3 +85,13 @@ class TestAsync(TestCase):
                 Async.wait(test(0), test(.1), test(.1), _raise(), timeout=.05)
                 ex_counts = Counter(map(type, eg.exception.exceptions))
                 self.assertEqual({TimeoutError: 2, ValueError: 1}, ex_counts)
+
+    def test_run_many(self):
+        items = []
+
+        def append():
+            items.append(0)
+
+        workers = Async.run(append, Async(append))
+        Async.wait(*workers)
+        self.assertEqual([0, 0], items)
