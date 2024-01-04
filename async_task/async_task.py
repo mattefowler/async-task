@@ -6,10 +6,12 @@ from collections.abc import Callable
 from functools import wraps
 from threading import Thread
 from types import TracebackType
-from typing import Generic, T
+from typing import Generic, Any, TypeVar
 
 SECONDS = float
 EXC_INFO = tuple[Exception, type[Exception], TracebackType]
+
+T = TypeVar("T")
 
 
 class Async(Generic[T]):
@@ -106,3 +108,8 @@ class Async(Generic[T]):
                 exceptions.append(e)
         if exceptions:
             raise ExceptionGroup("Exceptions occurred in worker execution", exceptions)
+
+    @classmethod
+    def run(cls, *tasks: Async | Callable[[], Any]) -> list[Worker]:
+        workers = [Async(t)() if not isinstance(t, Async) else t() for t in tasks]
+        return workers
