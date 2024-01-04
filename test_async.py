@@ -96,3 +96,13 @@ class TestAsync(TestCase):
         worker: Async.Worker = f()
         thread: Thread = worker._thread
         self.assertTrue(thread.daemon)
+
+    def test_run_many(self):
+        items = []
+
+        def append():
+            items.append(0)
+
+        workers = Async.run(append, Async(append))
+        Async.wait(*workers)
+        self.assertEqual([0, 0], items)
