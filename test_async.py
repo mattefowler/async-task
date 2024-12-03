@@ -97,6 +97,16 @@ class TestAsync(TestCase):
         thread: Thread = worker._thread
         self.assertTrue(thread.daemon)
 
+    def test_daemon_method_decorator(self):
+        class Cls:
+            @Async.daemon
+            def f():
+                pass
+
+        worker: Async.Worker = Cls().f()
+        thread: Thread = worker._thread
+        self.assertTrue(thread.daemon)
+
     def test_run_many(self):
         items = []
 
