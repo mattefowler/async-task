@@ -33,7 +33,7 @@ class Async(Generic[T]):
 
     def __get__(self, instance, owner) -> Async[T]:
         """Supports use of Async as a method decorator."""
-        return Async[T](self._function.__get__(instance, owner), f"{instance}.{self._thread_name}")
+        return Async[T](self._function.__get__(instance, owner), thread_name=f"{instance}.{self._thread_name}", daemon=self._daemon)
 
     @classmethod
     def daemon(cls, f, thread_name=None):
